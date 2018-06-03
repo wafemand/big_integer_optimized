@@ -11,7 +11,7 @@
 #include <memory>
 
 
-const size_t SMALL_SIZE = 8;
+const size_t SMALL_SIZE = 4;
 const bool MINUS = true;
 const bool PLUS = false;
 
@@ -62,7 +62,7 @@ class vector_digit {
 
         both_storage() {
             inplace = inplace_storage();
-            std::fill(inplace.data, inplace.data + SMALL_SIZE, 0);
+            //std::fill(inplace.data, inplace.data + SMALL_SIZE, 0);
         }
 
         ~both_storage() {
@@ -187,7 +187,7 @@ inline const vector_digit::digit *vector_digit::begin() const {
 
 
 inline vector_digit::digit *vector_digit::begin() {
-   // prepare_change();
+    prepare_change();
     return cur_data_pointer;
 }
 

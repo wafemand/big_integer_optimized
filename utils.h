@@ -20,11 +20,7 @@ template<typename T>
 inline T add_with_overflow(T &a, T b) {
     T c = a;
     a += b;
-    if (c > a) {
-        return 1;
-    } else {
-        return 0;
-    }
+    return T(c > a);
 }
 
 inline digit mul_with_overflow(digit &first, digit second) {

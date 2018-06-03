@@ -67,11 +67,20 @@ big_integer big_integer::abs() const {
 }
 
 
-void big_integer::mul(big_integer const &rhs) {
-    bool is_neg_a = digits.is_negative();
-    bool is_neg_b = rhs.digits.is_negative();
-    const big_integer a = abs();
-    const big_integer b = rhs.abs();
+void big_integer::unsigned_mul(digit rhs) {
+    digit carry = 0;
+    for (size_t i = 0; i < digits.size(); i++){
+        carry = add_with_overflow(digits[i], carry);
+        carry += mul_with_overflow(digits[i], rhs);
+    }
+    digits.push_back(carry);
+    pop_zeros();
+}
+
+
+void big_integer::unsigned_mul(big_integer const &rhs) {
+    const big_integer a = *this;
+    const big_integer &b = rhs;
     *this = 0;
     digits.resize(a.digits.size() + b.digits.size() + 1);
     for (size_t i = 0; i < a.digits.size(); i++) {
@@ -85,9 +94,6 @@ void big_integer::mul(big_integer const &rhs) {
         }
         digits[i + b.digits.size()] = carry;
     }
-    if (is_neg_a != is_neg_b) {
-        negate();
-    }
     pop_zeros();
 }
 
@@ -99,16 +105,18 @@ digit estimate(digit r0, digit r1, const digit d) {
 }
 
 
-big_integer big_integer::div_mod(digit rhs) {
-    big_integer a = *this;
-    big_integer b = rhs;
-    *this = 0;
+big_integer big_integer::unsigned_div_mod(digit rhs) {
+    big_integer const a = *this;
+    big_integer const b = rhs;
+    digits.resize(0);
     big_integer rem = 0;
     for (int64_t i = a.digits.size() - 1; i >= 0; i--) {
         rem <<= BITS;
         rem += a.digits[i];
         digit est = estimate(rem.digits.unbound_get(1), rem.digits.unbound_get(0), rhs);
-        rem -= b * est;
+        big_integer tmp = b;
+        tmp.unsigned_mul(est);
+        rem -= tmp;
         digits.push_back(est);
     }
     std::reverse(digits.begin(), digits.end());
@@ -117,38 +125,31 @@ big_integer big_integer::div_mod(digit rhs) {
 }
 
 
-big_integer big_integer::div_mod(big_integer const &rhs) {
-    bool is_neg_a = digits.is_negative();
-    bool is_neg_b = rhs.digits.is_negative();
-    big_integer a = abs();
-    big_integer b = rhs.abs();
+big_integer big_integer::unsigned_div_mod(big_integer const &rhs) {
+    digit scale = (~digit(0)) / (rhs.digits.back() + 1);
+    big_integer const a = *this * scale;
+    big_integer const b = rhs * scale;
     if (b == 0) {
         throw std::exception();
         // todo
     }
-    if (a < b){
-        b = *this;
+    if (a < b) {
+        big_integer const rem = *this;
         *this = 0;
-        return b;
+        return rem;
     }
     if (a == 0) {
         *this = 0;
         return rhs;
     }
-    digit scale = (~digit(0)) / (b.digits.back() + 1);
-    a *= scale;
-    b *= scale;
-    *this = 0;
     auto n = static_cast<int64_t>(a.digits.size());
     auto m = static_cast<int64_t>(b.digits.size());
-    if (n == m) {
-        a.digits.push_back(0);
-    }
     big_integer rem = 0;
     rem.digits.pop_back();
     for (int64_t i = n - m + 1; i < n; i++) {
         rem.digits.push_back(a.digits[i]);
     }
+    digits.resize(0);
     for (int64_t i = n - m; i >= 0; i--) {
         rem <<= BITS;
         rem += a.digits[i];
@@ -156,24 +157,19 @@ big_integer big_integer::div_mod(big_integer const &rhs) {
                 rem.digits.unbound_get(m),
                 rem.digits.unbound_get(m - 1),
                 b.digits[m - 1]);
-        big_integer q = b * est;
-        while (rem < q) {
-            q -= b;
+        big_integer tmp = b;
+        tmp.unsigned_mul(est);
+        while (rem < tmp) {
+            tmp -= b;
             est--;
         }
-        rem -= q;
+        rem -= tmp;
 
         assert(rem < b);
         digits.push_back(est);
     }
     std::reverse(digits.begin(), digits.end());
-    rem.div_mod(scale);
-    if (is_neg_a != is_neg_b) {
-        negate();
-    }
-    if (is_neg_a) {
-        rem.negate();
-    }
+    rem.unsigned_div_mod(scale);
     pop_zeros();
     rem.pop_zeros();
     return rem;
@@ -218,3 +214,4 @@ void big_integer::shift_right(int shift) {
     digits.pop_back();
     pop_zeros();
 }
+

@@ -66,13 +66,15 @@ private:
 
     void add(big_integer const &rhs);
 
-    void mul(big_integer const &rhs);
+    void unsigned_mul(big_integer const &rhs);
+
+    void unsigned_mul(digit rhs);
 
     big_integer abs() const;
 
-    big_integer div_mod(big_integer const &rhs);
+    big_integer unsigned_div_mod(big_integer const &rhs);
 
-    big_integer div_mod(digit rhs);
+    big_integer unsigned_div_mod(digit rhs);
 
     void shift_left(int shift);
 

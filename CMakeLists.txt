@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.10)
 project(big_integer_optimized)
 
+#sudo perf record -e instructions -c 1000000 --call-graph dwarf ./big_integer_testing
+
 include_directories(${big_integer_optimized_SOURCE_DIR})
 
 add_executable(big_integer_testing
@@ -16,9 +18,9 @@ add_executable(big_integer_testing
         vector_digit.cpp)
 
 if(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -std=c++11 -pedantic")
-    #    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
-    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fsanitize=address,undefined -D_GLIBCXX_DEBUG -g")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --std=c++17 -g -fno-omit-frame-pointer")
+    #    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")-Wall -fprofile-arcs -ftest-coverage -fsanitize=address,undefined
+    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -D_GLIBCXX_DEBUG -g -O0 -fno-omit-frame-pointer")
 endif()
 
 target_link_libraries(big_integer_testing -lgmp -lgmpxx -lpthread)

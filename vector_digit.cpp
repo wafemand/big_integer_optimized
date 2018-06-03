@@ -58,7 +58,7 @@ vector_digit &vector_digit::operator=(vector_digit const &other) {
     }
     sign = other.sign;
     _size = other._size;
-    prepare_change();
+    //prepare_change();
     return *this;
 }
 
@@ -98,20 +98,20 @@ vector_digit::~vector_digit() {
 }
 
 void vector_digit::push_back(digit d) {
-  //  prepare_change();
+    prepare_change();
     fix_capacity();
     _size++;
     at(_size - 1) = d;
 }
 
 void vector_digit::pop_back() {
-  //  prepare_change();
+    prepare_change();
     fix_capacity();
     _size--;
 }
 
 void vector_digit::resize(size_t new_size, digit default_value) {
-  //  prepare_change();
+    prepare_change();
     if (new_size > SMALL_SIZE) {
         move_memory(next_pow_2(new_size));
     }

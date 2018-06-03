@@ -55,12 +55,28 @@ big_integer &big_integer::operator-=(big_integer const &rhs) {
 }
 
 big_integer &big_integer::operator*=(big_integer const &rhs) {
-    mul(rhs);
+    bool is_neg_a = digits.is_negative();
+    bool is_neg_b = rhs.digits.is_negative();
+    if (is_neg_a){
+        negate();
+    }
+    unsigned_mul(rhs.abs());
+    if (is_neg_a != is_neg_b){
+        negate();
+    }
     return *this;
 }
 
 big_integer &big_integer::operator/=(big_integer const &rhs) {
-    div_mod(rhs);
+    bool is_neg_a = digits.is_negative();
+    bool is_neg_b = rhs.digits.is_negative();
+    if (is_neg_a){
+        negate();
+    }
+    unsigned_div_mod(rhs.abs());
+    if (is_neg_a != is_neg_b){
+        negate();
+    }
     return *this;
 }
 
@@ -80,7 +96,13 @@ big_integer &big_integer::operator^=(big_integer const &rhs) {
 }
 
 big_integer &big_integer::operator%=(big_integer const &rhs) {
-    *this = div_mod(rhs);
+    if (digits.is_negative()){
+        negate();
+        *this = -unsigned_div_mod(rhs.abs());
+    }
+    else{
+        *this = unsigned_div_mod(rhs.abs());
+    }
     return *this;
 }
 
