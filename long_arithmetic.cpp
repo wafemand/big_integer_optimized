@@ -70,8 +70,10 @@ big_integer big_integer::abs() const {
 void big_integer::unsigned_mul(digit rhs) {
     digit carry = 0;
     for (size_t i = 0; i < digits.size(); i++){
-        carry = add_with_overflow(digits[i], carry);
+        digit cur = carry;
+        carry = 0;
         carry += mul_with_overflow(digits[i], rhs);
+        carry += add_with_overflow(digits[i], cur);
     }
     digits.push_back(carry);
     pop_zeros();
