@@ -5,21 +5,25 @@
 typedef uint64_t digit;
 
 
+static const int READ_BLOCK_SIZE = 15;
+static const uint64_t READ_BLOCK_BASE = 1000ull * 1000ull * 1000ull * 1000ull * 1000ull;
+
+
 big_integer::big_integer() {
     digits.push_back(0);
-    digits.set_sign(PLUS);
+    digits.set_sign(vector_digit::PLUS);
 }
 
 
 big_integer::big_integer(int a) {
     digits.push_back(static_cast<digit>(a));
-    digits.set_sign(a < 0 ? MINUS : PLUS);
+    digits.set_sign(a < 0 ? vector_digit::MINUS : vector_digit::PLUS);
 }
 
 
 big_integer::big_integer(uint64_t a) {
     digits.push_back(a);
-    digits.set_sign(PLUS);
+    digits.set_sign(vector_digit::PLUS);
 }
 
 

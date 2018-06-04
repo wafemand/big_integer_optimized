@@ -11,12 +11,12 @@
 #include <memory>
 
 
-const size_t SMALL_SIZE = 4;
-const bool MINUS = true;
-const bool PLUS = false;
-
-
 class vector_digit {
+    static const size_t SMALL_SIZE = 4;
+public:
+    static const bool MINUS = true;
+    static const bool PLUS = false;
+private:
     typedef uint64_t digit;
 
     struct dynamic_storage {
@@ -29,12 +29,12 @@ class vector_digit {
         size_t capacity = 0;
         std::shared_ptr<digit> ptr = nullptr;
 
-        dynamic_storage &operator=(dynamic_storage const &other){
+        dynamic_storage &operator=(dynamic_storage const &other) {
             ptr = other.ptr;
             capacity = other.capacity;
         }
 
-        ~dynamic_storage(){
+        ~dynamic_storage() {
             ptr.reset();
         }
     };
@@ -42,7 +42,7 @@ class vector_digit {
     struct inplace_storage {
         digit data[SMALL_SIZE];
 
-        inplace_storage &operator=(inplace_storage const &other){
+        inplace_storage &operator=(inplace_storage const &other) {
             std::copy(other.data, other.data + SMALL_SIZE, data);
             return *this;
         }
@@ -52,8 +52,9 @@ class vector_digit {
         dynamic_storage dynamic;
         inplace_storage inplace;
 
-        both_storage(){}
-        ~both_storage(){}
+        both_storage() {}
+
+        ~both_storage() {}
     } storage;
 
     digit *cur_data_pointer;

@@ -9,10 +9,7 @@
 
 #include <cstdint>
 #include <string>
-#include "utils.h"
 #include "vector_digit.h"
-
-const digit BITS = sizeof(digit) * 8;
 
 class big_integer {
 
@@ -128,7 +125,7 @@ inline void big_integer::bitwise(big_integer const &rhs) {
     for (size_t i = 0; i < ans_size; ++i) {
         digits[i] = op(digits[i], rhs.digits[i]);
     }
-    digits.set_sign(leading_bit(digits.back()));
+    digits.set_sign(digits.back() >> (sizeof(digit) * 8 - 1));
     pop_zeros();
 }
 

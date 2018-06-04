@@ -6,7 +6,6 @@ project(big_integer_optimized)
 include_directories(${big_integer_optimized_SOURCE_DIR})
 
 add_executable(big_integer_testing
-        utils.h
         big_integer.h
         big_integer.cpp
         long_arithmetic.cpp
@@ -33,7 +32,6 @@ add_executable(big_integer_optimized
         vector_digit_testing.cpp
         big_integer.cpp
         big_integer.h
-        utils.h
         long_arithmetic.cpp
         vector_digit.h
         vector_digit.cpp

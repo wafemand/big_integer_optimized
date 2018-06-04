@@ -10,6 +10,44 @@
 #include "big_integer.h"
 
 
+typedef uint64_t digit;
+
+const digit BITS = sizeof(digit) * 8;
+
+
+inline digit add_with_overflow(digit &a, digit b) {
+    digit c = a;
+    a += b;
+    return digit(c > a);
+}
+
+inline digit mul_with_overflow(digit &first, digit second) {
+    static const int BITS = sizeof(digit) * 8;
+    __uint128_t a128 = first;
+    __uint128_t b128 = second;
+    a128 *= b128;
+    first = digit(a128);
+    return digit(a128 >> BITS);
+    int half = BITS / 2;
+    digit a = first >> half;
+    digit b = (first << half) >> half;
+    digit c = second >> half;
+    digit d = (second << half) >> half;
+    digit tmp = b * c;
+    digit carry = add_with_overflow(tmp, a * d);
+    digit h = ((b * c + a * d) >> half) + (carry << half);
+    digit l = (b * c + a * d) << half;
+    first *= second;
+    return a * c + h + add_with_overflow(l, b * d);
+}
+
+
+inline bool leading_bit(digit val){
+    return val >> (sizeof(digit) * 8 - 1);
+}
+
+
+
 void big_integer::subtract(big_integer const &rhs) {
     size_t max_size = std::max(digits.size(), rhs.digits.size()) + 1;
     size_t rhs_size = rhs.digits.size();
