@@ -90,6 +90,8 @@ private:
     void pop_zeros();
 
     friend int cmp(big_integer const &a, big_integer const &b);
+
+    void subtract(const big_integer &rhs);
 };
 
 
@@ -133,7 +135,8 @@ inline void big_integer::bitwise(big_integer const &rhs) {
 
 inline void big_integer::pop_zeros() {
     size_t cur = digits.size();
-    while (cur > 1 && digits.unchecked_get(cur - 1) == digits.leading()) {
+    big_integer const &const_link = *this;
+    while (cur > 1 && const_link.digits[cur - 1] == digits.leading()) {
         cur--;
     }
     digits.resize(cur);

@@ -34,8 +34,8 @@ big_integer::big_integer(std::string const &str) : big_integer()
         cur_dig_size = READ_BLOCK_SIZE;
     }
     for (auto i = static_cast<size_t>(is_neg); i < str.size();) {
-        *this *= READ_BLOCK_BASE;
-        *this += static_cast<uint64_t>(std::stoll(str.substr(i, cur_dig_size)));
+        unsigned_mul(READ_BLOCK_BASE);
+        add(static_cast<uint64_t>(std::stoll(str.substr(i, cur_dig_size))));
         i += cur_dig_size;
         cur_dig_size = READ_BLOCK_SIZE;
     }
@@ -51,7 +51,8 @@ big_integer &big_integer::operator+=(big_integer const &rhs) {
 }
 
 big_integer &big_integer::operator-=(big_integer const &rhs) {
-    return *this += -rhs;
+    subtract(rhs);
+    return *this;
 }
 
 big_integer &big_integer::operator*=(big_integer const &rhs) {
@@ -202,21 +203,19 @@ bool operator!=(big_integer const &a, big_integer const &b) {
 }
 
 bool operator<(big_integer const &a, big_integer const &b) {
-    return cmp(a, b) == -1;
+    return cmp(a, b) < 0;
 }
 
 bool operator>(big_integer const &a, big_integer const &b) {
-    return cmp(a, b) == 1;
+    return cmp(a, b) > 0;
 }
 
 bool operator<=(big_integer const &a, big_integer const &b) {
-    int cmp_res = cmp(a, b);
-    return cmp_res == -1 || cmp_res == 0;
+    return cmp(a, b) <= 0;
 }
 
 bool operator>=(big_integer const &a, big_integer const &b) {
-    int cmp_res = cmp(a, b);
-    return cmp_res == 1 || cmp_res == 0;
+    return cmp(a, b) >= 0;
 }
 
 

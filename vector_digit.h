@@ -24,31 +24,23 @@ class vector_digit {
             void operator()(digit *ptr) {
                 free(ptr);
             }
-        } deleter;
+        };
 
         size_t capacity = 0;
         std::shared_ptr<digit> ptr = nullptr;
 
-        dynamic_storage() = default;
+        dynamic_storage &operator=(dynamic_storage const &other){
+            ptr = other.ptr;
+            capacity = other.capacity;
+        }
 
-        explicit dynamic_storage(size_t capacity);
-
-        dynamic_storage(dynamic_storage const &other);
-
-        dynamic_storage &operator=(dynamic_storage const &other);
-
-        ~dynamic_storage();
-
+        ~dynamic_storage(){
+            ptr.reset();
+        }
     };
 
     struct inplace_storage {
         digit data[SMALL_SIZE];
-
-        inplace_storage() = default;
-
-        inplace_storage(inplace_storage const &other) {
-            *this = other;
-        }
 
         inplace_storage &operator=(inplace_storage const &other){
             std::copy(other.data, other.data + SMALL_SIZE, data);
@@ -60,14 +52,8 @@ class vector_digit {
         dynamic_storage dynamic;
         inplace_storage inplace;
 
-        both_storage() {
-            inplace = inplace_storage();
-            //std::fill(inplace.data, inplace.data + SMALL_SIZE, 0);
-        }
-
-        ~both_storage() {
-
-        };
+        both_storage(){}
+        ~both_storage(){}
     } storage;
 
     digit *cur_data_pointer;
@@ -91,10 +77,6 @@ class vector_digit {
 public:
     vector_digit();
 
-    explicit vector_digit(size_t size);
-
-    vector_digit(size_t size, digit default_value);
-
     vector_digit(vector_digit const &other);
 
     vector_digit &operator=(vector_digit const &other);
@@ -117,11 +99,7 @@ public:
 
     size_t capacity() const;
 
-    digit &at(size_t index);
-
     digit unbound_get(size_t index) const;
-
-    digit unchecked_get(size_t index) const;
 
     digit leading() const;
 
@@ -155,29 +133,18 @@ inline size_t vector_digit::size() const {
 }
 
 inline size_t vector_digit::capacity() const {
-    return size_t(is_small()) * SMALL_SIZE
-           + size_t(!is_small()) * storage.dynamic.capacity;
+    const digit vars[2] = {storage.dynamic.capacity, SMALL_SIZE};
+    return vars[is_small()];
 }
 
-inline vector_digit::digit &vector_digit::at(size_t index) {
-    return begin()[index];
-}
 
 inline vector_digit::digit vector_digit::unbound_get(size_t index) const {
-    /*if (index >= size()){
-        return leading();
-    }
-    else{
-        return cur_data_pointer[index];
-    }*/
-    bool out_of_range = index >= size();
-    index &= capacity() - 1;
-    return cur_data_pointer[index] * static_cast<size_t>(!out_of_range)
-           + leading() * static_cast<size_t>(out_of_range);
+    return index >= size() ? leading() : cur_data_pointer[index];
 }
 
 inline vector_digit::digit vector_digit::leading() const {
-    return is_negative() ? ~0ull : 0ull;
+    static const digit vars[2] = {0ull, ~0ull};
+    return vars[is_negative()];
 }
 
 
@@ -211,16 +178,18 @@ inline vector_digit::digit vector_digit::back() const {
     return unbound_get(size() - 1);
 }
 
-inline vector_digit::digit vector_digit::unchecked_get(size_t index) const {
-    return cur_data_pointer[index];
-}
-
 inline vector_digit::digit &vector_digit::operator[](size_t index) {
-    return at(index);
+    return begin()[index];
 }
 
 inline vector_digit::digit vector_digit::operator[](size_t index) const {
-    return unchecked_get(index);
+    return cur_data_pointer[index];
+}
+
+inline void vector_digit::prepare_change() {
+    if (!is_small() && !storage.dynamic.ptr.unique()) {
+        move_memory(storage.dynamic.capacity);
+    }
 }
 
 #endif //VECTOR_DIGIT_VECTOR_DIGIT_H

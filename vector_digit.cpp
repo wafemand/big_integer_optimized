@@ -34,18 +34,6 @@ vector_digit::vector_digit() {
     this->_size = 0;
 }
 
-vector_digit::vector_digit(size_t size, digit default_value) :
-        vector_digit() {
-    if (size > SMALL_SIZE) {
-        move_memory(next_pow_2(std::max(size_t(1), size)));
-    }
-    this->_size = size;
-    std::fill(cur_data_pointer, cur_data_pointer + size, default_value);
-}
-
-vector_digit::vector_digit(size_t size) :
-        vector_digit(size, 0) {}
-
 vector_digit::vector_digit(vector_digit const &other) : vector_digit() {
     *this = other;
 }
@@ -58,13 +46,15 @@ vector_digit &vector_digit::operator=(vector_digit const &other) {
     }
     sign = other.sign;
     _size = other._size;
-    //prepare_change();
     return *this;
 }
 
 void vector_digit::move_memory(size_t new_capacity) {
     assert(new_capacity >= SMALL_SIZE);
-    auto new_storage = dynamic_storage(new_capacity);
+    auto new_storage = dynamic_storage();
+    auto *mem = static_cast<digit *>(malloc(new_capacity * sizeof(digit)));
+    new_storage.ptr = std::shared_ptr<digit>(mem, dynamic_storage::Deleter());
+    new_storage.capacity = new_capacity;
     std::copy(cur_data_pointer, cur_data_pointer + std::min(size(), new_capacity), new_storage.ptr.get());
     reset_to_big(new_storage);
 }
@@ -85,11 +75,6 @@ void vector_digit::reset_to_small(inplace_storage const &other) {
     cur_data_pointer = storage.inplace.data;
 }
 
-void vector_digit::prepare_change() {
-    if (!is_small() && !storage.dynamic.ptr.unique()) {
-        move_memory(storage.dynamic.capacity);
-    }
-}
 
 vector_digit::~vector_digit() {
     if (!is_small()) {
@@ -98,28 +83,28 @@ vector_digit::~vector_digit() {
 }
 
 void vector_digit::push_back(digit d) {
-    prepare_change();
     fix_capacity();
     _size++;
-    at(_size - 1) = d;
+    begin()[_size - 1] = d;
 }
 
 void vector_digit::pop_back() {
-    prepare_change();
     fix_capacity();
     _size--;
 }
 
 void vector_digit::resize(size_t new_size, digit default_value) {
-    prepare_change();
     if (new_size > SMALL_SIZE) {
         move_memory(next_pow_2(new_size));
     }
     size_t old_size = _size;
     _size = new_size;
-    while (old_size < _size) {
-        at(old_size) = default_value;
-        old_size++;
+    if (old_size < _size){
+        prepare_change();
+        while (old_size < _size) {
+            cur_data_pointer[old_size] = default_value;
+            old_size++;
+        }
     }
 }
 
@@ -144,24 +129,3 @@ void vector_digit::get_counts() {
             << "\nsimple: " << simple_ctor
             << std::endl;
 }*/
-
-vector_digit::dynamic_storage::dynamic_storage(size_t capacity) {
-    auto *mem = static_cast<digit *>(malloc(capacity * sizeof(digit)));
-    ptr = std::shared_ptr<digit>(mem, deleter);
-    this->capacity = capacity;
-}
-
-vector_digit::dynamic_storage &vector_digit::dynamic_storage::operator=(const vector_digit::dynamic_storage &other) {
-    ptr = other.ptr;
-    capacity = other.capacity;
-    return *this;
-}
-
-vector_digit::dynamic_storage::dynamic_storage(const vector_digit::dynamic_storage &other) {
-    *this = other;
-}
-
-vector_digit::dynamic_storage::~dynamic_storage() {
-    ptr.reset();
-}
-

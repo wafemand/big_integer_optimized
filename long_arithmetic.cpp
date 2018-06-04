@@ -6,17 +6,52 @@
 #include <vector>
 #include <algorithm>
 #include <cassert>
+#include <cstring>
 #include "big_integer.h"
 
 
+void big_integer::subtract(big_integer const &rhs){
+    size_t max_size = std::max(digits.size(), rhs.digits.size()) + 1;
+    size_t rhs_size = rhs.digits.size();
+    digits.resize(max_size, digits.leading());
+    digit carry = 1;
+    digit *data_ptr = digits.begin();
+
+    for (size_t i = 0; i < rhs_size; ++i) {
+        digit cur_rhs = ~rhs.digits[i];
+        carry = add_with_overflow(data_ptr[i], carry);
+        carry += add_with_overflow(data_ptr[i], cur_rhs);
+    }
+    digit lead = ~rhs.digits.leading();
+
+    for (size_t i = rhs_size; i < max_size; i++){
+        carry = add_with_overflow(data_ptr[i], carry);
+        carry += add_with_overflow(data_ptr[i], lead);
+    }
+
+    digits.set_sign(leading_bit(digits.back()));
+
+    pop_zeros();
+}
+
+
 void big_integer::add(big_integer const &rhs) {
-    size_t ans_size = std::max(digits.size(), rhs.digits.size()) + 1;
-    digits.resize(ans_size, digits.leading());
+    size_t max_size = std::max(digits.size(), rhs.digits.size()) + 1;
+    size_t rhs_size = rhs.digits.size();
+    digits.resize(max_size, digits.leading());
     digit carry = 0;
-    for (size_t i = 0; i < ans_size; ++i) {
-        digit cur_rhs = rhs.digits.unbound_get(i);
-        carry = add_with_overflow(digits[i], carry);
-        carry += add_with_overflow(digits[i], cur_rhs);
+    digit *data_ptr = digits.begin();
+
+    for (size_t i = 0; i < rhs_size; ++i) {
+        digit cur_rhs = rhs.digits[i];
+        carry = add_with_overflow(data_ptr[i], carry);
+        carry += add_with_overflow(data_ptr[i], cur_rhs);
+    }
+    digit lead = rhs.digits.leading();
+
+    for (size_t i = rhs_size; i < max_size; i++){
+        carry = add_with_overflow(data_ptr[i], carry);
+        carry += add_with_overflow(data_ptr[i], lead);
     }
 
     digits.set_sign(leading_bit(digits.back()));
@@ -29,11 +64,18 @@ int cmp(big_integer const &a, big_integer const &b) { // (a - b) = res * |a - b|
     if (a.digits.is_negative() != b.digits.is_negative()) {
         return int(b.digits.is_negative()) - int(a.digits.is_negative());
     }
-    size_t max_size = std::max(a.digits.size(), b.digits.size());
-    for (size_t j = 0; j < max_size; j++) {
-        size_t i = max_size - j - 1;
-        if (a.digits.unbound_get(i) != b.digits.unbound_get(i)) {
-            if (a.digits.unbound_get(i) < b.digits.unbound_get(i)) {
+    if (a.digits.size() != b.digits.size()) {
+        if (a.digits.is_negative()) {
+            return a.digits.size() < b.digits.size() ? 1 : -1;
+        } else {
+            return a.digits.size() < b.digits.size() ? -1 : 1;
+        }
+    }
+    size_t cur_size = a.digits.size();
+    for (size_t j = 0; j < cur_size; j++) {
+        size_t i = cur_size - j - 1;
+        if (a.digits[i] != b.digits[i]) {
+            if (a.digits[i] < b.digits[i]) {
                 return -1;
             } else {
                 return 1;
@@ -69,11 +111,12 @@ big_integer big_integer::abs() const {
 
 void big_integer::unsigned_mul(digit rhs) {
     digit carry = 0;
-    for (size_t i = 0; i < digits.size(); i++){
+    digit *this_ptr = digits.begin();
+    for (size_t i = 0; i < digits.size(); i++) {
         digit cur = carry;
         carry = 0;
-        carry += mul_with_overflow(digits[i], rhs);
-        carry += add_with_overflow(digits[i], cur);
+        carry += mul_with_overflow(this_ptr[i], rhs);
+        carry += add_with_overflow(this_ptr[i], cur);
     }
     digits.push_back(carry);
     pop_zeros();
@@ -114,7 +157,7 @@ big_integer big_integer::unsigned_div_mod(digit rhs) {
     big_integer rem = 0;
     for (int64_t i = a.digits.size() - 1; i >= 0; i--) {
         rem <<= BITS;
-        rem += a.digits[i];
+        rem.digits[0] = a.digits[i];
         digit est = estimate(rem.digits.unbound_get(1), rem.digits.unbound_get(0), rhs);
         big_integer tmp = b;
         tmp.unsigned_mul(est);
@@ -128,9 +171,8 @@ big_integer big_integer::unsigned_div_mod(digit rhs) {
 
 
 big_integer big_integer::unsigned_div_mod(big_integer const &rhs) {
-    digit scale = (~digit(0)) / (rhs.digits.back() + 1);
-    big_integer const a = *this * scale;
-    big_integer const b = rhs * scale;
+    big_integer a = *this;
+    big_integer b = rhs;
     if (b == 0) {
         throw std::exception();
         // todo
@@ -144,21 +186,28 @@ big_integer big_integer::unsigned_div_mod(big_integer const &rhs) {
         *this = 0;
         return rhs;
     }
+    digit scale = (~digit(0)) / (rhs.digits.back() + 1);
+    a.unsigned_mul(scale);
+    b.unsigned_mul(scale);
+
     auto n = static_cast<int64_t>(a.digits.size());
     auto m = static_cast<int64_t>(b.digits.size());
+    digits.resize(n - m + 1);
+    digit *ptr_a = a.digits.begin();
+    digit *ptr_this = digits.begin();
+    digit b_lead = b.digits[m - 1];
     big_integer rem = 0;
-    rem.digits.pop_back();
-    for (int64_t i = n - m + 1; i < n; i++) {
-        rem.digits.push_back(a.digits[i]);
-    }
-    digits.resize(0);
+
+    rem.digits.resize(m + 1);
+    std::copy(ptr_a + n - m + 1, ptr_a + n, rem.digits.begin());
+
     for (int64_t i = n - m; i >= 0; i--) {
         rem <<= BITS;
-        rem += a.digits[i];
+        rem.digits[0] = ptr_a[i];
         digit est = estimate(
                 rem.digits.unbound_get(m),
                 rem.digits.unbound_get(m - 1),
-                b.digits[m - 1]);
+                b_lead);
         big_integer tmp = b;
         tmp.unsigned_mul(est);
         while (rem < tmp) {
@@ -166,9 +215,9 @@ big_integer big_integer::unsigned_div_mod(big_integer const &rhs) {
             est--;
         }
         rem -= tmp;
-
         assert(rem < b);
-        digits.push_back(est);
+        *ptr_this = est;
+        ptr_this++;
     }
     std::reverse(digits.begin(), digits.end());
     rem.unsigned_div_mod(scale);
