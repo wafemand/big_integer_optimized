@@ -47,7 +47,6 @@ inline bool leading_bit(digit val){
 }
 
 
-
 void big_integer::subtract(big_integer const &rhs) {
     size_t max_size = std::max(digits.size(), rhs.digits.size()) + 1;
     size_t rhs_size = rhs.digits.size();

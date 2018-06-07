@@ -51,11 +51,9 @@ vector_digit &vector_digit::operator=(vector_digit const &other) {
 
 void vector_digit::move_memory(size_t new_capacity) {
     assert(new_capacity >= SMALL_SIZE);
-    auto new_storage = dynamic_storage();
-    auto *mem = static_cast<digit *>(malloc(new_capacity * sizeof(digit)));
-    new_storage.ptr = std::shared_ptr<digit>(mem, dynamic_storage::Deleter());
-    new_storage.capacity = new_capacity;
-    std::copy(cur_data_pointer, cur_data_pointer + std::min(size(), new_capacity), new_storage.ptr.get());
+    auto new_storage = dynamic_storage(new_capacity);
+
+    std::copy(cur_data_pointer, cur_data_pointer + std::min(size(), new_capacity), new_storage.ptr);
     reset_to_big(new_storage);
 }
 
@@ -64,7 +62,7 @@ void vector_digit::reset_to_big(dynamic_storage const &other) {
         new(&storage.dynamic) dynamic_storage();
     }
     storage.dynamic = other;
-    cur_data_pointer = storage.dynamic.ptr.get();
+    cur_data_pointer = storage.dynamic.ptr;
 }
 
 void vector_digit::reset_to_small(inplace_storage const &other) {

@@ -8,7 +8,6 @@
 
 #include <cstdint>
 #include <cstddef>
-#include <memory>
 
 
 class vector_digit {
@@ -20,22 +19,45 @@ private:
     typedef uint64_t digit;
 
     struct dynamic_storage {
-        struct Deleter {
-            void operator()(digit *ptr) {
-                free(ptr);
-            }
-        };
-
         size_t capacity = 0;
-        std::shared_ptr<digit> ptr = nullptr;
+        digit *ptr = nullptr;
 
         dynamic_storage &operator=(dynamic_storage const &other) {
-            ptr = other.ptr;
+            connect(other.ptr);
             capacity = other.capacity;
         }
 
+        dynamic_storage() = default;
+
+        dynamic_storage(size_t capacity)
+            : capacity(capacity)
+        {
+            auto *mem = static_cast<digit *>(malloc((capacity + 1) * sizeof(digit)));
+            *mem = 0;
+            connect(mem + 1);
+        }
+
+        void disconnect(){
+            if (ptr != nullptr){
+                ptr[-1]--;
+                if (ptr[-1] == 0){
+                    free(ptr - 1);
+                }
+            }
+        }
+
+        void connect(digit *new_ptr){
+            disconnect();
+            ptr = new_ptr;
+            ptr[-1]++;
+        }
+
+        bool unique(){
+            return ptr[-1] == 1;
+        }
+
         ~dynamic_storage() {
-            ptr.reset();
+            disconnect();
         }
     };
 
@@ -188,7 +210,7 @@ inline vector_digit::digit vector_digit::operator[](size_t index) const {
 }
 
 inline void vector_digit::prepare_change() {
-    if (!is_small() && !storage.dynamic.ptr.unique()) {
+    if (!is_small() && !storage.dynamic.unique()) {
         move_memory(storage.dynamic.capacity);
     }
 }
