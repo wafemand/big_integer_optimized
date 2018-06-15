@@ -28,47 +28,11 @@ inline digit mul_with_overflow(digit &first, digit second) {
     a128 *= b128;
     first = digit(a128);
     return digit(a128 >> BITS);
-    int half = BITS / 2;
-    digit a = first >> half;
-    digit b = (first << half) >> half;
-    digit c = second >> half;
-    digit d = (second << half) >> half;
-    digit tmp = b * c;
-    digit carry = add_with_overflow(tmp, a * d);
-    digit h = ((b * c + a * d) >> half) + (carry << half);
-    digit l = (b * c + a * d) << half;
-    first *= second;
-    return a * c + h + add_with_overflow(l, b * d);
 }
 
 
-inline bool leading_bit(digit val){
+inline bool leading_bit(digit val) {
     return val >> (sizeof(digit) * 8 - 1);
-}
-
-
-void big_integer::subtract(big_integer const &rhs) {
-    size_t max_size = std::max(digits.size(), rhs.digits.size()) + 1;
-    size_t rhs_size = rhs.digits.size();
-    digits.resize(max_size, digits.leading());
-    digit carry = 1;
-    digit *this_ptr = digits.begin();
-
-    for (size_t i = 0; i < rhs_size; ++i) {
-        digit cur_rhs = ~rhs.digits[i];
-        carry = add_with_overflow(this_ptr[i], carry);
-        carry += add_with_overflow(this_ptr[i], cur_rhs);
-    }
-    digit lead = ~rhs.digits.leading();
-
-    for (size_t i = rhs_size; i < max_size; i++) {
-        carry = add_with_overflow(this_ptr[i], carry);
-        carry += add_with_overflow(this_ptr[i], lead);
-    }
-
-    digits.set_sign(leading_bit(digits.back()));
-
-    pop_zeros();
 }
 
 
@@ -97,53 +61,28 @@ void big_integer::add(big_integer const &rhs) {
 }
 
 
-int cmp(big_integer const &a, big_integer const &b) { // (a - b) = res * |a - b|
-    if (a.digits.is_negative() != b.digits.is_negative()) {
-        return int(b.digits.is_negative()) - int(a.digits.is_negative());
-    }
-    if (a.digits.size() != b.digits.size()) {
-        if (a.digits.is_negative()) {
-            return a.digits.size() < b.digits.size() ? 1 : -1;
-        } else {
-            return a.digits.size() < b.digits.size() ? -1 : 1;
-        }
-    }
-    size_t cur_size = a.digits.size();
-    for (size_t j = 0; j < cur_size; j++) {
-        size_t i = cur_size - j - 1;
-        if (a.digits[i] != b.digits[i]) {
-            if (a.digits[i] < b.digits[i]) {
-                return -1;
-            } else {
-                return 1;
-            }
-        }
-    }
-    return 0;
-}
-
-
-void big_integer::bit_negate() {
+void big_integer::subtract(big_integer const &rhs) {
+    size_t max_size = std::max(digits.size(), rhs.digits.size()) + 1;
+    size_t rhs_size = rhs.digits.size();
+    digits.resize(max_size, digits.leading());
+    digit carry = 1;
     digit *this_ptr = digits.begin();
-    for (size_t i = 0; i < digits.size(); i++) {
-        this_ptr[i] = ~this_ptr[i];
+
+    for (size_t i = 0; i < rhs_size; ++i) {
+        digit cur_rhs = ~rhs.digits[i];
+        carry = add_with_overflow(this_ptr[i], carry);
+        carry += add_with_overflow(this_ptr[i], cur_rhs);
     }
-    digits.set_sign(!digits.is_negative());
-}
+    digit lead = ~rhs.digits.leading();
 
-
-void big_integer::negate() {
-    bit_negate();
-    add(1);
-}
-
-
-big_integer big_integer::abs() const {
-    if (digits.is_negative()) {
-        return -*this;
-    } else {
-        return *this;
+    for (size_t i = rhs_size; i < max_size; i++) {
+        carry = add_with_overflow(this_ptr[i], carry);
+        carry += add_with_overflow(this_ptr[i], lead);
     }
+
+    digits.set_sign(leading_bit(digits.back()));
+
+    pop_zeros();
 }
 
 
@@ -205,8 +144,7 @@ big_integer big_integer::unsigned_div_mod(big_integer const &rhs) {
     big_integer a = *this;
     big_integer b = rhs;
     if (b == 0) {
-        throw std::exception();
-        // todo
+        throw std::runtime_error("Division by zero");
     }
     if (a < b) {
         big_integer const rem = *this;
@@ -224,17 +162,17 @@ big_integer big_integer::unsigned_div_mod(big_integer const &rhs) {
     auto n = static_cast<int64_t>(a.digits.size());
     auto m = static_cast<int64_t>(b.digits.size());
     digits.resize(static_cast<size_t>(n - m + 1));
-    digit *ptr_a = a.digits.begin();
+    digit *a_ptr = a.digits.begin();
     digit *this_ptr = digits.begin();
     digit b_lead = b.digits[m - 1];
     big_integer rem = 0;
 
     rem.digits.resize(static_cast<size_t>(m + 1));
-    std::copy(ptr_a + n - m + 1, ptr_a + n, rem.digits.begin());
+    std::copy(a_ptr + n - m + 1, a_ptr + n, rem.digits.begin());
 
     for (int64_t i = n - m; i >= 0; i--) {
         rem <<= BITS;
-        rem.digits[0] = ptr_a[i];
+        rem.digits[0] = a_ptr[i];
         digit est = estimate(
                 rem.digits.unbound_get(static_cast<size_t>(m)),
                 rem.digits.unbound_get(static_cast<size_t>(m - 1)),
@@ -302,5 +240,55 @@ void big_integer::shift_right(int shift) {
     }
     digits.pop_back();
     pop_zeros();
+}
+
+
+big_integer big_integer::abs() const {
+    if (digits.is_negative()) {
+        return -*this;
+    } else {
+        return *this;
+    }
+}
+
+
+void big_integer::bit_negate() {
+    digit *this_ptr = digits.begin();
+    for (size_t i = 0; i < digits.size(); i++) {
+        this_ptr[i] = ~this_ptr[i];
+    }
+    digits.set_sign(!digits.is_negative());
+}
+
+
+void big_integer::negate() {
+    bit_negate();
+    add(1);
+}
+
+
+int cmp(big_integer const &a, big_integer const &b) { // (a - b) = res * |a - b|
+    if (a.digits.is_negative() != b.digits.is_negative()) {
+        return int(b.digits.is_negative()) - int(a.digits.is_negative());
+    }
+    if (a.digits.size() != b.digits.size()) {
+        if (a.digits.is_negative()) {
+            return a.digits.size() < b.digits.size() ? 1 : -1;
+        } else {
+            return a.digits.size() < b.digits.size() ? -1 : 1;
+        }
+    }
+    size_t cur_size = a.digits.size();
+    for (size_t j = 0; j < cur_size; j++) {
+        size_t i = cur_size - j - 1;
+        if (a.digits[i] != b.digits[i]) {
+            if (a.digits[i] < b.digits[i]) {
+                return -1;
+            } else {
+                return 1;
+            }
+        }
+    }
+    return 0;
 }
 

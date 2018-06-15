@@ -27,8 +27,7 @@ big_integer::big_integer(uint64_t a) {
 }
 
 
-big_integer::big_integer(std::string const &str) : big_integer()
-{
+big_integer::big_integer(std::string const &str) : big_integer() {
     bool is_neg = str[0] == '-';
     size_t cur_dig_size = str.size() % READ_BLOCK_SIZE;
     if (is_neg) {
@@ -62,11 +61,11 @@ big_integer &big_integer::operator-=(big_integer const &rhs) {
 big_integer &big_integer::operator*=(big_integer const &rhs) {
     bool is_neg_a = digits.is_negative();
     bool is_neg_b = rhs.digits.is_negative();
-    if (is_neg_a){
+    if (is_neg_a) {
         negate();
     }
     unsigned_mul(rhs.abs());
-    if (is_neg_a != is_neg_b){
+    if (is_neg_a != is_neg_b) {
         negate();
     }
     return *this;
@@ -75,11 +74,11 @@ big_integer &big_integer::operator*=(big_integer const &rhs) {
 big_integer &big_integer::operator/=(big_integer const &rhs) {
     bool is_neg_a = digits.is_negative();
     bool is_neg_b = rhs.digits.is_negative();
-    if (is_neg_a){
+    if (is_neg_a) {
         negate();
     }
     unsigned_div_mod(rhs.abs());
-    if (is_neg_a != is_neg_b){
+    if (is_neg_a != is_neg_b) {
         negate();
     }
     return *this;
@@ -101,11 +100,10 @@ big_integer &big_integer::operator^=(big_integer const &rhs) {
 }
 
 big_integer &big_integer::operator%=(big_integer const &rhs) {
-    if (digits.is_negative()){
+    if (digits.is_negative()) {
         negate();
         *this = -unsigned_div_mod(rhs.abs());
-    }
-    else{
+    } else {
         *this = unsigned_div_mod(rhs.abs());
     }
     return *this;
@@ -231,7 +229,7 @@ std::string to_string(big_integer const &a) {
         res.push_back('0' + static_cast<char>(dig));
         q /= 10;
     } while (q > 0);
-    if (a.digits.is_negative()){
+    if (a.digits.is_negative()) {
         res.push_back('-');
     }
     std::reverse(res.begin(), res.end());
