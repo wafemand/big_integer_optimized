@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.10)
 project(big_integer_optimized)
 
+set(CMAKE_CXX_STANDARD 17)
+
 #sudo perf record -e instructions -c 1000000 --call-graph dwarf ./big_integer_testing
 
 include_directories(${big_integer_optimized_SOURCE_DIR})
@@ -26,25 +28,3 @@ target_link_libraries(big_integer_testing -lgmp -lgmpxx -lpthread)
 
 
 
-set(CMAKE_CXX_STANDARD 17)
-
-add_executable(big_integer_optimized
-        vector_digit_testing.cpp
-        big_integer.cpp
-        big_integer.h
-        long_arithmetic.cpp
-        vector_digit.h
-        vector_digit.cpp
-        vector_digit_testing.cpp)
-
-
-add_executable(vector_digit_testing
-        vector_digit_testing.cpp
-        vector_digit.cpp
-        vector_digit.h
-        gtest/gtest-all.cc
-        gtest/gtest.h
-        gtest/gtest_main.cc)
-
-
-target_link_libraries(vector_digit_testing -lgmp -lgmpxx -lpthread)
