@@ -22,13 +22,19 @@ inline digit add_with_overflow(digit &a, digit b) {
 }
 
 inline digit mul_with_overflow(digit &first, digit second) {
-    static const int BITS = sizeof(digit) * 8;
-    // Мм привет переносимый код
-    __uint128_t a128 = first;
-    __uint128_t b128 = second;
-    a128 *= b128;
-    first = digit(a128);
-    return digit(a128 >> BITS);
+    // Пока, переносимый код
+    // Привет, битовая магия
+    static const int HALF = BITS / 2;
+    digit a = first >> HALF;
+    digit b = (first << HALF) >> HALF;
+    digit c = second >> HALF;
+    digit d = (second << HALF) >> HALF;
+    digit tmp = b * c;
+    digit carry = add_with_overflow(tmp, a * d);
+    digit h = ((b * c + a * d) >> HALF) + (carry << HALF);
+    digit l = (b * c + a * d) << HALF;
+    first *= second;
+    return a * c + h + add_with_overflow(l, b * d);
 }
 
 

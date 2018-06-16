@@ -1,10 +1,7 @@
 //
 // Created by andrey on 25.05.18.
 //
-
-#ifndef VECTOR_DIGIT_VECTOR_DIGIT_H
-#define VECTOR_DIGIT_VECTOR_DIGIT_H
-
+#pragma once
 
 #include <cstdint>
 #include <cstddef>
@@ -26,26 +23,27 @@ private:
         dynamic_storage &operator=(dynamic_storage const &other) {
             connect(other.ptr);
             capacity = other.capacity;
-            // А где return?
+            return *this;
         }
 
         dynamic_storage() = default;
 
         dynamic_storage(size_t capacity)
                 : capacity(capacity) {
-            // не используй Сишные функции
-            // operator new(...) ~ malloc
-            // new digit[capacity + 1]
-            auto *mem = static_cast<digit *>(malloc((capacity + 1) * sizeof(digit)));
+            auto *mem = new digit[capacity + 1];
             *mem = 0;
             connect(mem + 1);
         }
 
+        digit &ref_counter(){
+            return ptr[-1];
+        }
+
         void disconnect() {
             if (ptr != nullptr) {
-                ptr[-1]--;
-                if (ptr[-1] == 0) {
-                    free(ptr - 1);
+                ref_counter()--;
+                if (ref_counter() == 0) {
+                    delete[] (ptr - 1);
                 }
             }
         }
@@ -53,12 +51,11 @@ private:
         void connect(digit *new_ptr) {
             disconnect();
             ptr = new_ptr;
-            // лучше сделать метод вида, get_ptr_to_counter
-            ptr[-1]++;
+            ref_counter()++;
         }
 
         bool unique() {
-            return ptr[-1] == 1;
+            return ref_counter() == 1;
         }
 
         ~dynamic_storage() {
@@ -67,7 +64,6 @@ private:
     };
 
     struct inplace_storage {
-        // std::array
         digit data[SMALL_SIZE];
 
         inplace_storage &operator=(inplace_storage const &other) {
@@ -85,11 +81,6 @@ private:
         ~both_storage() {}
     } storage;
 
-    // старайся не писать определения членов в середине класса
-    // либо в начале, либо в конце
-    digit *cur_data_pointer;
-    size_t _size;
-    bool sign;
 
     void move_memory(size_t new_capacity);
     void prepare_change();
@@ -141,8 +132,7 @@ public:
         }
     }
 
-    // cbegin бывает удобнее, но не суть
-    const digit *begin() const {
+    const digit *cbegin() const {
         return cur_data_pointer;
     }
 
@@ -151,8 +141,8 @@ public:
         return cur_data_pointer;
     }
 
-    const digit *end() const {
-        return begin() + size();
+    const digit *cend() const {
+        return cbegin() + size();
     }
 
     digit *end() {
@@ -163,7 +153,11 @@ public:
         static const digit vars[2] = {0ull, ~0ull};
         return vars[is_negative()];
     }
+
+private:
+
+    digit *cur_data_pointer;
+    size_t _size;
+    bool sign;
 };
 
-
-#endif //VECTOR_DIGIT_VECTOR_DIGIT_H

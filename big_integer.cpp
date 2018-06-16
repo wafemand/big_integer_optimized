@@ -6,7 +6,7 @@ typedef uint64_t digit;
 
 
 static const int READ_BLOCK_SIZE = 15;
-static const uint64_t READ_BLOCK_BASE = 1000'000'000'000'000;
+static const uint64_t READ_BLOCK_BASE = 1'000'000'000'000'000ull;
 
 
 big_integer::big_integer() {
@@ -85,17 +85,17 @@ big_integer &big_integer::operator/=(big_integer const &rhs) {
 }
 
 big_integer &big_integer::operator&=(big_integer const &rhs) {
-    bitwise<std::bit_and<digit> >(rhs);
+    bitwise(rhs, std::bit_and<>());
     return *this;
 }
 
 big_integer &big_integer::operator|=(big_integer const &rhs) {
-    bitwise<std::bit_or<digit>>(rhs);
+    bitwise(rhs, std::bit_or<>());
     return *this;
 }
 
 big_integer &big_integer::operator^=(big_integer const &rhs) {
-    bitwise<std::bit_xor<digit>>(rhs);
+    bitwise(rhs, std::bit_xor<>());
     return *this;
 }
 
@@ -137,7 +137,7 @@ big_integer big_integer::operator~() const {
 }
 
 big_integer &big_integer::operator++() {
-    // самый быстрый ++ который я когда либо видел
+    *this += 1;
     return *this;
 }
 

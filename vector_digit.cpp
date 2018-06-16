@@ -60,13 +60,11 @@ void vector_digit::fix_capacity() {
     }
 }
 
-
-// используй список инициализаций
-vector_digit::vector_digit() {
-    sign = PLUS;
-    cur_data_pointer = storage.inplace.data;
-    this->_size = 0;
-}
+vector_digit::vector_digit()
+        : sign(PLUS),
+          cur_data_pointer(storage.inplace.data),
+          _size(0)
+{}
 
 vector_digit::vector_digit(vector_digit const &other) : vector_digit() {
     *this = other;
@@ -88,7 +86,6 @@ vector_digit::~vector_digit() {
         storage.dynamic.~dynamic_storage();
     }
 }
-
 
 void vector_digit::push_back(digit d) {
     fix_capacity();
@@ -121,7 +118,7 @@ void vector_digit::resize(size_t new_size, digit default_value) {
 }
 
 vector_digit::digit vector_digit::back() const {
-    return *(end() - 1);
+    return *(cend() - 1);
 }
 
 bool vector_digit::is_negative() const {
