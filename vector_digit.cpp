@@ -61,6 +61,7 @@ void vector_digit::fix_capacity() {
 }
 
 
+// используй список инициализаций
 vector_digit::vector_digit() {
     sign = PLUS;
     cur_data_pointer = storage.inplace.data;

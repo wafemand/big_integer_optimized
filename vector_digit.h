@@ -26,12 +26,16 @@ private:
         dynamic_storage &operator=(dynamic_storage const &other) {
             connect(other.ptr);
             capacity = other.capacity;
+            // А где return?
         }
 
         dynamic_storage() = default;
 
         dynamic_storage(size_t capacity)
                 : capacity(capacity) {
+            // не используй Сишные функции
+            // operator new(...) ~ malloc
+            // new digit[capacity + 1]
             auto *mem = static_cast<digit *>(malloc((capacity + 1) * sizeof(digit)));
             *mem = 0;
             connect(mem + 1);
@@ -49,6 +53,7 @@ private:
         void connect(digit *new_ptr) {
             disconnect();
             ptr = new_ptr;
+            // лучше сделать метод вида, get_ptr_to_counter
             ptr[-1]++;
         }
 
@@ -62,6 +67,7 @@ private:
     };
 
     struct inplace_storage {
+        // std::array
         digit data[SMALL_SIZE];
 
         inplace_storage &operator=(inplace_storage const &other) {
@@ -79,6 +85,8 @@ private:
         ~both_storage() {}
     } storage;
 
+    // старайся не писать определения членов в середине класса
+    // либо в начале, либо в конце
     digit *cur_data_pointer;
     size_t _size;
     bool sign;
@@ -133,6 +141,7 @@ public:
         }
     }
 
+    // cbegin бывает удобнее, но не суть
     const digit *begin() const {
         return cur_data_pointer;
     }

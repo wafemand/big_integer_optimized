@@ -14,6 +14,12 @@ TEST(correctness, two_plus_two)
     EXPECT_EQ(2              + big_integer(2), 4);
 }
 
+TEST(correctness, prefix_increment_operator) {
+    big_integer a(10);
+    ++a;
+    EXPECT_EQ(a, 11);
+}
+
 TEST(correctness, default_ctor)
 {
     big_integer a;

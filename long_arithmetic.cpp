@@ -23,6 +23,7 @@ inline digit add_with_overflow(digit &a, digit b) {
 
 inline digit mul_with_overflow(digit &first, digit second) {
     static const int BITS = sizeof(digit) * 8;
+    // Мм привет переносимый код
     __uint128_t a128 = first;
     __uint128_t b128 = second;
     a128 *= b128;
