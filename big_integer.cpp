@@ -6,7 +6,7 @@ typedef uint64_t digit;
 
 
 static const int READ_BLOCK_SIZE = 15;
-static const uint64_t READ_BLOCK_BASE = 1000ull * 1000ull * 1000ull * 1000ull * 1000ull;
+static const uint64_t READ_BLOCK_BASE = 1000'000'000'000'000;
 
 
 big_integer::big_integer() {
@@ -120,6 +120,7 @@ big_integer &big_integer::operator<<=(int rhs) {
 }
 
 big_integer big_integer::operator+() const {
+    // класс оператор
     return *this;
 }
 
@@ -136,6 +137,7 @@ big_integer big_integer::operator~() const {
 }
 
 big_integer &big_integer::operator++() {
+    // самый быстрый ++ который я когда либо видел
     return *this;
 }
 
@@ -145,7 +147,7 @@ big_integer &big_integer::operator--() {
 
 big_integer big_integer::operator++(int) {
     big_integer res = *this;
-    add(1);
+    *this += 1;
     return res;
 }
 
@@ -229,9 +231,11 @@ std::string to_string(big_integer const &a) {
         res.push_back('0' + static_cast<char>(dig));
         q /= 10;
     } while (q > 0);
+
     if (a.digits.is_negative()) {
         res.push_back('-');
     }
+
     std::reverse(res.begin(), res.end());
     return res;
 }
