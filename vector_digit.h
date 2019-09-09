@@ -105,7 +105,7 @@ public:
     void set_sign(bool new_sign);
 
 
-    /* often use methods for inline
+    /* frequently used methods placed below for inlining
      * ~750 ms (without inline) --> ~600 ms */
 
     digit unbound_get(size_t index) const {
